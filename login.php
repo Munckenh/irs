@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -13,23 +11,29 @@ if ($conn->connect_error) {
 
 $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $eventKey = $_POST['eventKey'];
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-    $query = "SELECT COUNT(*) AS count FROM events WHERE event_key = '$eventKey'";
-    $result = $conn->query($query);
+    $stmt = $conn->prepare("SELECT username,password FROM users WHERE username = ?");
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($result) {
+    if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        if ($row['count'] > 0) {
-            $_SESSION['eventKey'] = $eventKey;
-            header("Location: event/");
+        $stored_hash = $row['password'];
+
+        if (password_verify($password, $stored_hash)) {
+            header("Location: admin/");
             exit();
         } else {
-            $error = "Invalid event key. Please try again.";
+            $error = "Invalid username or password.";
         }
     } else {
-        $error = "Error executing query: " . $conn->error;
+        $error = "Invalid username or password.";
     }
+
+    $stmt->close();
 }
 ?>
 
@@ -39,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
+    <title>Login</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="./style.css" rel="stylesheet">
 </head>
@@ -52,24 +56,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="card bg-dark text-white" style="border-radius: 1rem;">
                         <div class="card-body p-5 text-center">
                             <div class="mb-md-5 mt-md-4 pb-5">
-                                <h2 class="fw-bold mb-2 text-uppercase">Event Key</h2>
-                                <p class="text-white-50 mb-5">Please enter your event key.</p>
+                                <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+                                <p class="text-white-50 mb-5">Please enter your username and password.</p>
                                 <form action="" method="POST">
                                     <div data-mdb-input-init class="form-outline form-white mb-4">
-                                        <input type="text" id="eventKey" name="eventKey" autocomplete="off" class="form-control form-control-lg" />
-                                        <label class="form-label" for="eventKey">Event Key</label>
+                                        <input type="text" name="username" id="username" class="form-control form-control-lg" />
+                                        <label class="form-label" for="username">Username</label>
+                                    </div>
+                                    <div data-mdb-input-init class="form-outline form-white mb-4">
+                                        <input type="password" name="password" id="password" class="form-control form-control-lg" />
+                                        <label class="form-label" for="password">Password</label>
                                     </div>
                                     <?php if ($error) { ?>
                                         <div class="alert alert-danger" role="alert">
                                             <?php echo $error; ?>
                                         </div>
                                     <?php } ?>
-                                    <button data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-light btn-lg px-5" type="submit">Enter</button>
+                                    <button data-mdb-button-init data-mdb-ripple-init
+                                        class="btn btn-outline-light btn-lg px-5" type="submit">Login</button>
                                 </form>
-
                             </div>
                             <div>
-                                <p class="mb-0">Log in as an administrator? <a href="login.php"
+                                <p class="mb-0">Do you want to enter an event key? <a href="."
                                         class="text-white-50 fw-bold">Click Here</a>
                                 </p>
                             </div>

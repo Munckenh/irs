@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -11,22 +9,17 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $eventKey = $_POST['eventKey'];
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+    $hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = "SELECT COUNT(*) AS count FROM events WHERE event_key = '$eventKey'";
+    $query = "INSERT INTO users (username, password) VALUES ('$username', '$hash')";
     $result = $conn->query($query);
 
     if ($result) {
-        $row = $result->fetch_assoc();
-        if ($row['count'] > 0) {
-            $_SESSION['eventKey'] = $eventKey;
-            header("Location: event/");
-            exit();
-        } else {
-            $error = "Invalid event key. Please try again.";
-        }
+        header("Location: login.php");
+        exit();
     } else {
         $error = "Error executing query: " . $conn->error;
     }
@@ -51,27 +44,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="col-12 col-md-8 col-lg-6 col-xl-5">
                     <div class="card bg-dark text-white" style="border-radius: 1rem;">
                         <div class="card-body p-5 text-center">
-                            <div class="mb-md-5 mt-md-4 pb-5">
-                                <h2 class="fw-bold mb-2 text-uppercase">Event Key</h2>
-                                <p class="text-white-50 mb-5">Please enter your event key.</p>
+                            <div class="mb-md-5 mt-md-4 pb-1">
+                                <h2 class="fw-bold mb-2 text-uppercase">Register</h2>
+                                <p class="text-white-50 mb-5">Please enter a username and password.</p>
                                 <form action="" method="POST">
                                     <div data-mdb-input-init class="form-outline form-white mb-4">
-                                        <input type="text" id="eventKey" name="eventKey" autocomplete="off" class="form-control form-control-lg" />
-                                        <label class="form-label" for="eventKey">Event Key</label>
+                                        <input type="text" name="username" id="username" class="form-control form-control-lg" />
+                                        <label class="form-label" for="username">Username</label>
                                     </div>
-                                    <?php if ($error) { ?>
-                                        <div class="alert alert-danger" role="alert">
-                                            <?php echo $error; ?>
-                                        </div>
-                                    <?php } ?>
-                                    <button data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-light btn-lg px-5" type="submit">Enter</button>
+                                    <div data-mdb-input-init class="form-outline form-white mb-4">
+                                        <input type="password" name="password" id="password" class="form-control form-control-lg" />
+                                        <label class="form-label" for="password">Password</label>
+                                    </div>
+                                    <button data-mdb-button-init data-mdb-ripple-init
+                                        class="btn btn-outline-light btn-lg px-5" type="submit">Register</button>
                                 </form>
-
-                            </div>
-                            <div>
-                                <p class="mb-0">Log in as an administrator? <a href="login.php"
-                                        class="text-white-50 fw-bold">Click Here</a>
-                                </p>
                             </div>
                         </div>
                     </div>
